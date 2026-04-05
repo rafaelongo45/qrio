@@ -80,18 +80,18 @@ export async function paymentRoutes(app: FastifyInstance) {
     })
   })
 
-  // GET /api/payments/status — poll current user's latest payment
-  app.get('/status', { preHandler: requireAuth }, async (request, reply) => {
+  // GET /api/payments/status/:id — poll a specific payment by ID
+  app.get<{ Params: { id: string } }>('/status/:id', { preHandler: requireAuth }, async (request, reply) => {
     const payload = request.user as JWTPayload
+    const { id } = request.params
 
     const [payment] = await db
       .select()
       .from(payments)
-      .where(eq(payments.userId, payload.userId))
-      .orderBy(desc(payments.createdAt))
+      .where(and(eq(payments.id, id), eq(payments.userId, payload.userId)))
       .limit(1)
 
-    if (!payment) return reply.code(404).send({ error: 'Nenhum pagamento encontrado' })
+    if (!payment) return reply.code(404).send({ error: 'Pagamento não encontrado' })
 
     return { id: payment.id, status: payment.status, amount: payment.amount }
   })
@@ -105,8 +105,9 @@ export async function adminRoutes(app: FastifyInstance) {
     if (!payment) return reply.code(404).send({ error: 'Pagamento não encontrado' })
     if (payment.status === 'confirmed') return reply.code(409).send({ error: 'Pagamento já confirmado' })
 
+    const planExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
     await db.update(payments).set({ status: 'confirmed' }).where(eq(payments.id, id))
-    await db.update(users).set({ plan: 'pro' }).where(eq(users.id, payment.userId))
+    await db.update(users).set({ plan: 'pro', planExpiresAt }).where(eq(users.id, payment.userId))
 
     return { ok: true, userId: payment.userId, paymentId: id }
   }

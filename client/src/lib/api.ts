@@ -137,7 +137,7 @@ export const api = {
   payments: {
     checkout: () =>
       apiFetch<PaymentCheckout>('POST', '/payments/checkout'),
-    status: () =>
-      apiFetch<PaymentStatus>('GET', '/payments/status'),
+    status: (id: string) =>
+      apiFetch<PaymentStatus>('GET', `/payments/status/${id}`),
   },
 }

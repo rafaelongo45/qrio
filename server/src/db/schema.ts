@@ -1,11 +1,12 @@
 import { pgTable, uuid, varchar, timestamp, jsonb, index } from 'drizzle-orm/pg-core'
 
 export const users = pgTable('users', {
-  id:           uuid('id').primaryKey().defaultRandom(),
-  email:        varchar('email', { length: 255 }).notNull().unique(),
-  passwordHash: varchar('password_hash', { length: 255 }).notNull(),
-  plan:         varchar('plan', { length: 20 }).notNull().default('free'),
-  createdAt:    timestamp('created_at').notNull().defaultNow(),
+  id:             uuid('id').primaryKey().defaultRandom(),
+  email:          varchar('email', { length: 255 }).notNull().unique(),
+  passwordHash:   varchar('password_hash', { length: 255 }).notNull(),
+  plan:           varchar('plan', { length: 20 }).notNull().default('free'),
+  planExpiresAt:  timestamp('plan_expires_at'),
+  createdAt:      timestamp('created_at').notNull().defaultNow(),
 })
 
 export const refreshTokens = pgTable('refresh_tokens', {

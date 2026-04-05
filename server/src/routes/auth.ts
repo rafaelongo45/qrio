@@ -140,6 +140,12 @@ export async function authRoutes(app: FastifyInstance) {
       return reply.code(401).send({ error: 'Usuário não encontrado' })
     }
 
+    // Auto-downgrade if Pro plan has expired
+    if (user.plan === 'pro' && user.planExpiresAt && user.planExpiresAt < new Date()) {
+      await db.update(users).set({ plan: 'free', planExpiresAt: null }).where(eq(users.id, user.id))
+      user.plan = 'free'
+    }
+
     const accessToken = app.jwt.sign(
       { userId: user.id, email: user.email, plan: user.plan },
       { expiresIn: ACCESS_TOKEN_TTL }

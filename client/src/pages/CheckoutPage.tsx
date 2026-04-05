@@ -57,7 +57,7 @@ export default function CheckoutPage() {
 
     pollRef.current = setInterval(async () => {
       try {
-        const data = await api.payments.status()
+        const data = await api.payments.status(paymentId)
         if (data.status === 'confirmed') {
           clearInterval(pollRef.current!)
           setConfirmed(true)
