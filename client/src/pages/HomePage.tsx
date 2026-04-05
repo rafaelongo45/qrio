@@ -12,9 +12,9 @@ const PLANS = [
     features: [
       'QR Codes estáticos ilimitados',
       'Download em PNG e SVG',
-      'Personalização de cores',
       '7 tipos de QR Code',
-      'Com marca d\'água QRio',
+      'Até 5 QR Codes salvos na conta',
+      'Marca d\'água no download',
     ],
     cta: 'Começar grátis',
     href: '/gerador-qr-code',
@@ -87,7 +87,7 @@ export default function HomePage() {
             {[
               { icon: Download, value: 'Grátis', label: 'PNG e SVG' },
               { icon: Zap, value: 'Um clique', label: 'Geração instantânea' },
-              { icon: Shield, value: 'Seguro', label: 'Sem armazenar dados' },
+              { icon: Shield, value: 'Seguro', label: 'Dados protegidos' },
               { icon: Star, value: '7 tipos', label: 'De QR Code' },
             ].map(({ icon: Icon, value, label }) => (
               <div key={label} className="flex flex-col items-center gap-1">

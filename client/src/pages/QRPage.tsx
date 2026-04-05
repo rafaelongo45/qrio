@@ -79,7 +79,7 @@ export default function QRPage({ defaultType }: Props) {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           {[
             { step: '1', title: 'Preencha o formulário', desc: 'Escolha o tipo de QR Code e preencha as informações necessárias.' },
-            { step: '2', title: 'Visualize em tempo real', desc: 'O QR Code é gerado automaticamente enquanto você digita.' },
+            { step: '2', title: 'Gere com um clique', desc: 'Clique em "Gerar QR Code" e o resultado aparece na hora.' },
             { step: '3', title: 'Baixe e use', desc: 'Faça o download em PNG ou SVG e use onde quiser.' },
           ].map(({ step, title, desc }) => (
             <div key={step} className="flex gap-4">

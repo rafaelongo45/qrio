@@ -24,15 +24,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Restore session on mount via refresh token cookie
   useEffect(() => {
-    api.auth.refresh()
-      .then(data => {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 6000)
+
+    fetch('/api/auth/refresh', {
+      method: 'POST',
+      credentials: 'include',
+      signal: controller.signal,
+    })
+      .then(async res => {
+        if (!res.ok) return
+        const data: { accessToken: string; user: User } = await res.json()
         setAccessToken(data.accessToken)
         setUser(data.user)
       })
       .catch(() => {
-        // No active session — that's fine
+        // No active session or timeout — that's fine
       })
-      .finally(() => setIsLoading(false))
+      .finally(() => {
+        clearTimeout(timeout)
+        setIsLoading(false)
+      })
+
+    return () => {
+      controller.abort()
+      clearTimeout(timeout)
+    }
   }, [])
 
   const login = useCallback(async (email: string, password: string) => {

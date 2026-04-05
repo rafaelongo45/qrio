@@ -58,6 +58,7 @@ export default function Footer() {
             <ul className="space-y-2">
               <li><Link to="/#planos" className="text-sm text-gray-500 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Planos e Preços</Link></li>
               <li><Link to="/#como-funciona" className="text-sm text-gray-500 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Como Funciona</Link></li>
+              <li><Link to="/politica-de-privacidade" className="text-sm text-gray-500 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Política de Privacidade</Link></li>
             </ul>
           </div>
         </div>

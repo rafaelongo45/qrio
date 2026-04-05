@@ -7,6 +7,8 @@ import QRPage from './pages/QRPage'
 import DashboardPage from './pages/DashboardPage'
 import DynamicQRPage from './pages/DynamicQRPage'
 import CheckoutPage from './pages/CheckoutPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
+import PrivacyPage from './pages/PrivacyPage'
 import NotFound from './pages/NotFound'
 
 function AppRoutes() {
@@ -27,6 +29,8 @@ function AppRoutes() {
         <Route path="/gerador-qr-code-email" element={<QRPage key={pathname} defaultType="email" />} />
         <Route path="/gerador-qr-code-texto" element={<QRPage key={pathname} defaultType="texto" />} />
         <Route path="/gerador-qr-code-telefone" element={<QRPage key={pathname} defaultType="telefone" />} />
+        <Route path="/redefinir-senha" element={<ResetPasswordPage />} />
+        <Route path="/politica-de-privacidade" element={<PrivacyPage />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>
