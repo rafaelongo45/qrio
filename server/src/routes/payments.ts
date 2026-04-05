@@ -120,21 +120,53 @@ export async function adminRoutes(app: FastifyInstance) {
     return false
   }
 
-  // POST /api/admin/payments/:id/confirm  (curl / webhook)
+  // POST /api/admin/payments/:id/confirm  (curl / webhook / form)
   app.post<{ Params: { id: string } }>('/payments/:id/confirm', async (request, reply) => {
     if (!checkSecret(request, reply)) return
-    return confirmPayment(request.params.id, reply)
+    const result = await confirmPayment(request.params.id, reply)
+    if (!result || !('ok' in result)) return
+    // Se veio do browser (form), retorna HTML; senão retorna JSON
+    const accept = request.headers['accept'] ?? ''
+    if (accept.includes('text/html')) {
+      return reply.type('text/html').send(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"><title>Ativado — QRio</title>
+<style>body{font-family:system-ui,sans-serif;background:#f5f3ff;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}.card{background:white;border-radius:16px;padding:32px;max-width:380px;width:90%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.08)}.icon{font-size:2.5rem}h1{color:#1f2937;margin:12px 0 6px}p{color:#6b7280;font-size:.9rem}</style>
+</head><body><div class="card"><div class="icon">✅</div><h1>Pro ativado!</h1><p>Usuário atualizado com sucesso.</p></div></body></html>`)
+    }
+    return result
   })
 
-  // GET /api/admin/payments/:id/confirm?secret=...  (link do WhatsApp)
+  // GET /api/admin/payments/:id/confirm?secret=...  (link do Telegram — exibe página de confirmação)
   app.get<{ Params: { id: string } }>('/payments/:id/confirm', async (request, reply) => {
     if (!checkSecret(request, reply)) return
-    const result = await confirmPayment(request.params.id, reply)
-    if (result && 'ok' in result) {
-      return reply.type('text/html').send(
-        `<h2>✅ Pagamento confirmado!</h2><p>Usuário ativado no plano Pro.</p>`
-      )
-    }
+    const { id } = request.params
+    const secret = encodeURIComponent((request.query as any).secret ?? '')
+    return reply.type('text/html').send(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Confirmar pagamento — QRio</title>
+<style>
+  body{font-family:system-ui,sans-serif;background:#f5f3ff;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
+  .card{background:white;border-radius:16px;padding:32px;max-width:380px;width:90%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+  h1{font-size:1.25rem;color:#1f2937;margin:12px 0 6px}
+  p{color:#6b7280;font-size:.9rem;margin:0 0 24px}
+  button{background:#6d28d9;color:white;border:none;border-radius:10px;padding:12px 28px;font-size:1rem;font-weight:600;cursor:pointer;width:100%}
+  button:hover{background:#5b21b6}
+  .icon{font-size:2.5rem}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="icon">💰</div>
+  <h1>Confirmar pagamento Pro</h1>
+  <p>Clique no botão para ativar o plano Pro do usuário.</p>
+  <form method="POST" action="/api/admin/payments/${id}/confirm?secret=${secret}">
+    <button type="submit">✅ Confirmar e ativar Pro</button>
+  </form>
+</div>
+</body>
+</html>`)
   })
 
   // GET /api/admin/payments — list all payments
