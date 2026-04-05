@@ -35,6 +35,9 @@ services:
       PIX_NAME: ${PIX_NAME:-QRio}
       PIX_CITY: ${PIX_CITY:-Sao Paulo}
       ADMIN_SECRET: ${ADMIN_SECRET:?ADMIN_SECRET is required}
+      SERVER_URL: ${SERVER_URL:-http://localhost:3001}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
 
   nginx:
     build:

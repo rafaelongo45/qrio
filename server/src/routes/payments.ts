@@ -3,6 +3,9 @@ import type { FastifyInstance } from 'fastify'
 import { db } from '../db/index.js'
 import { payments, users } from '../db/schema.js'
 import { buildPixPayload } from '../utils/pix.js'
+import { sendTelegram } from '../utils/telegram.js'
+
+const SERVER_URL = process.env.SERVER_URL ?? 'http://localhost:3001'
 
 const PIX_KEY  = process.env.PIX_KEY  ?? ''
 const PIX_NAME = process.env.PIX_NAME ?? 'QRio'
@@ -56,16 +59,20 @@ export async function paymentRoutes(app: FastifyInstance) {
       .orderBy(desc(payments.createdAt))
       .limit(1)
 
-    if (existing) {
-      return { id: existing.id, pixPayload: makePixPayload(existing.id), amount: existing.amount, status: existing.status }
-    }
-
-    const [payment] = await db
+    const payment = existing ?? (await db
       .insert(payments)
       .values({ userId: payload.userId, amount: PLAN_PRICE })
       .returning()
+      .then(rows => rows[0]))
 
-    return reply.code(201).send({
+    const confirmUrl = `${SERVER_URL}/api/admin/payments/${payment.id}/confirm?secret=${process.env.ADMIN_SECRET}`
+    sendTelegram(
+      `💰 Pagamento Pix QRio\nUsuário: ${user.email}\nValor: R$ ${PLAN_PRICE}`,
+      confirmUrl
+    )
+
+    const status = existing ? 200 : 201
+    return reply.code(status).send({
       id: payment.id,
       pixPayload: makePixPayload(payment.id),
       amount: payment.amount,
@@ -92,15 +99,8 @@ export async function paymentRoutes(app: FastifyInstance) {
 
 // Admin route registered separately (no /api/payments prefix confusion)
 export async function adminRoutes(app: FastifyInstance) {
-  // POST /api/admin/payments/:id/confirm
-  app.post<{ Params: { id: string } }>('/payments/:id/confirm', async (request, reply) => {
-    const adminSecret = request.headers['x-admin-secret']
-    if (!adminSecret || adminSecret !== process.env.ADMIN_SECRET) {
-      return reply.code(403).send({ error: 'Acesso negado' })
-    }
-
-    const { id } = request.params
-
+  // Shared confirm logic
+  async function confirmPayment(id: string, reply: any) {
     const [payment] = await db.select().from(payments).where(eq(payments.id, id)).limit(1)
     if (!payment) return reply.code(404).send({ error: 'Pagamento não encontrado' })
     if (payment.status === 'confirmed') return reply.code(409).send({ error: 'Pagamento já confirmado' })
@@ -109,6 +109,31 @@ export async function adminRoutes(app: FastifyInstance) {
     await db.update(users).set({ plan: 'pro' }).where(eq(users.id, payment.userId))
 
     return { ok: true, userId: payment.userId, paymentId: id }
+  }
+
+  function checkSecret(request: any, reply: any): boolean {
+    const fromHeader = request.headers['x-admin-secret']
+    const fromQuery  = (request.query as any).secret
+    if (fromHeader === process.env.ADMIN_SECRET || fromQuery === process.env.ADMIN_SECRET) return true
+    reply.code(403).send({ error: 'Acesso negado' })
+    return false
+  }
+
+  // POST /api/admin/payments/:id/confirm  (curl / webhook)
+  app.post<{ Params: { id: string } }>('/payments/:id/confirm', async (request, reply) => {
+    if (!checkSecret(request, reply)) return
+    return confirmPayment(request.params.id, reply)
+  })
+
+  // GET /api/admin/payments/:id/confirm?secret=...  (link do WhatsApp)
+  app.get<{ Params: { id: string } }>('/payments/:id/confirm', async (request, reply) => {
+    if (!checkSecret(request, reply)) return
+    const result = await confirmPayment(request.params.id, reply)
+    if (result && 'ok' in result) {
+      return reply.type('text/html').send(
+        `<h2>✅ Pagamento confirmado!</h2><p>Usuário ativado no plano Pro.</p>`
+      )
+    }
   })
 
   // GET /api/admin/payments — list all payments
