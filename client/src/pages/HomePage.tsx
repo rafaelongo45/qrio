@@ -22,7 +22,7 @@ const PLANS = [
   },
   {
     name: 'Pro',
-    price: 'R$15',
+    price: 'R$14,99',
     period: 'por mês',
     description: 'Para profissionais e pequenas empresas',
     features: [
