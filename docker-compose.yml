@@ -1,0 +1,51 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: qrio-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-qrio}
+      POSTGRES_USER: ${POSTGRES_USER:-qrio}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-qrio} -d ${POSTGRES_DB:-qrio}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    container_name: qrio-server
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-qrio}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-qrio}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?JWT_ACCESS_SECRET is required}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET is required}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8080}
+      PORT: 3001
+      NODE_ENV: production
+      PIX_KEY: ${PIX_KEY:?PIX_KEY is required}
+      PIX_NAME: ${PIX_NAME:-QRio}
+      PIX_CITY: ${PIX_CITY:-Sao Paulo}
+      ADMIN_SECRET: ${ADMIN_SECRET:?ADMIN_SECRET is required}
+
+  nginx:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    container_name: qrio-nginx
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - "8080:80"
+
+volumes:
+  postgres_data:
