@@ -2,11 +2,11 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://qrio-server.onrender.com/api/:path*"
+      "destination": "https://qrio-server-jina.onrender.com/api/:path*"
     },
     {
       "source": "/r/:path*",
-      "destination": "https://qrio-server.onrender.com/r/:path*"
+      "destination": "https://qrio-server-jina.onrender.com/r/:path*"
     },
     {
       "source": "/(.*)",
